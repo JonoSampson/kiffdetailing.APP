@@ -313,24 +313,6 @@
   .confirm-row .lbl { color: var(--text-muted); flex-shrink: 0; }
   .confirm-row .val { font-weight: 600; text-align: right; }
 
-  /* ── MY BOOKINGS ── */
-  .booking-item {
-    background: var(--surface); border-radius: var(--radius);
-    padding: 22px; box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-    margin-bottom: 16px;
-    display: flex; gap: 20px; align-items: flex-start;
-    flex-wrap: wrap;
-  }
-  .booking-color-bar {
-    width: 5px; border-radius: 4px; min-height: 80px; flex-shrink: 0;
-  }
-  .booking-info { flex: 1; min-width: 200px; }
-  .booking-service { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
-  .booking-meta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
-  .booking-meta-item { display: flex; align-items: center; gap: 5px; font-size: 0.83rem; color: var(--text-muted); }
-  .booking-price { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
-
   /* ── STATUS BADGE ── */
   .status {
     display: inline-block; padding: 4px 12px; border-radius: 100px;
@@ -528,7 +510,6 @@
   <div class="nav-links" id="navLinks">
     <a onclick="showPage('home')" id="nav-home" class="active">Home</a>
     <a onclick="showPage('services')" id="nav-services">Services</a>
-    <a onclick="showPage('mybookings')" id="nav-mybookings">My Bookings</a>
     <a onclick="showPage('contact')" id="nav-contact">Contact</a>
     <a onclick="chooseServiceFirst()" class="nav-cta" id="nav-booking">Book Now</a>
   </div>
@@ -757,30 +738,9 @@
       </div>
       <div style="display:flex;flex-direction:column;gap:12px;">
         <button class="btn btn-accent btn-block" onclick="chooseServiceFirst()">Book Another Service</button>
-        <button class="btn btn-primary btn-block" onclick="showPage('mybookings')">View My Bookings</button>
         <button class="btn btn-outline" style="color:var(--text);border-color:var(--border);" onclick="showPage('home')">Back to Home</button>
       </div>
     </div>
-  </div>
-</div>
-
-<!-- ═══════════════ MY BOOKINGS PAGE ═══════════════ -->
-<div id="page-mybookings" class="page">
-  <div class="page-header">
-    <h1>📋 My Bookings</h1>
-    <p>Look up your KiffDetailing bookings by email address</p>
-  </div>
-  <div class="section" style="max-width:780px;margin:0 auto;">
-    <div class="lookup-wrap">
-      <div class="lookup-box">
-        <h3>🔍 Find My Bookings</h3>
-        <div class="lookup-row">
-          <input type="email" id="lookupEmail" placeholder="Enter your email address" style="flex:1;" />
-          <button class="btn btn-primary" onclick="lookupBookings()">Search</button>
-        </div>
-      </div>
-    </div>
-    <div id="myBookingsList"></div>
   </div>
 </div>
 
@@ -898,7 +858,7 @@
   <div class="section">
     <div class="admin-login-wrap">
       <div class="admin-login-note">
-        This page is for KiffDetailing staff only. Customers can use Home, Services, My Bookings, Contact, or Book Now.
+        This page is for KiffDetailing staff only. Customers can use Home, Services, Contact, or Book Now.
       </div>
       <div class="form-card">
         <div class="form-section-title">⚙ Admin Access</div>
@@ -1129,7 +1089,6 @@ function showPage(name) {
 
   if (name === 'services') renderServices();
   if (name === 'admin') renderAdmin();
-  if (name === 'mybookings') { document.getElementById('myBookingsList').innerHTML = ''; document.getElementById('lookupEmail').value = ''; }
   if (name === 'booking') initBookingForm();
 }
 
@@ -1441,52 +1400,6 @@ async function submitBooking(e) {
 }
 
 // ════════════════════════════════════
-//  MY BOOKINGS
-// ════════════════════════════════════
-async function lookupBookings() {
-  const email = cleanEmail(document.getElementById('lookupEmail').value);
-  const list = document.getElementById('myBookingsList');
-  if (!email) { showToast('⚠️ Please enter your email address.'); return; }
-
-  list.innerHTML = `<div class="empty-state"><div class="ei">⏳</div><h3>Searching...</h3><p>Checking your online bookings.</p></div>`;
-
-  try {
-    const snap = await db.collection(BOOKINGS_COLLECTION).where('emailLower', '==', email).get();
-    const found = snap.docs.map(normalizeBooking).sort((a,b) => new Date(b.date) - new Date(a.date));
-
-    if (found.length === 0) {
-      list.innerHTML = `<div class="empty-state"><div class="ei">📭</div><h3>No bookings found</h3><p>We couldn't find any bookings for <strong>${email}</strong>. Double-check your email or <a href="#" onclick="chooseServiceFirst()" style="color:var(--primary);">make a booking with KiffDetailing</a>.</p></div>`;
-      return;
-    }
-
-    list.innerHTML = found.map(b => `
-      <div class="booking-item">
-        <div class="booking-color-bar" style="background:${statusColor(b.status)};"></div>
-        <div class="booking-info">
-          <div class="booking-service">${serviceIcon(b.serviceId)} ${b.serviceName}</div>
-          <div style="margin-top:4px;"><span class="status status-${b.status}">${capitalize(b.status)}</span></div>
-          <div class="booking-meta-row">
-            <div class="booking-meta-item">📅 ${formatDate(b.date)}</div>
-            <div class="booking-meta-item">⏰ ${b.time}</div>
-            <div class="booking-meta-item">🚘 ${b.make} ${b.model}</div>
-            <div class="booking-meta-item">📍 ${b.location || 'Location not added'}</div>
-            <div class="booking-meta-item">🏷 #${b.id}</div>
-          </div>
-          ${b.notes ? `<div style="margin-top:8px;font-size:0.82rem;color:var(--text-muted);">📝 ${b.notes}</div>` : ''}
-        </div>
-        <div>
-          <div class="booking-price">R${b.servicePrice}</div>
-        </div>
-      </div>
-    `).join('');
-  } catch (err) {
-    console.error(err);
-    list.innerHTML = `<div class="empty-state"><div class="ei">⚠️</div><h3>Could not load bookings</h3><p>Please check that Firestore is created and your security rules allow this test.</p></div>`;
-    showToast('❌ Could not load bookings from Firebase.');
-  }
-}
-
-// ════════════════════════════════════
 //  ADMIN
 // ════════════════════════════════════
 async function renderAdmin() {
@@ -1647,3 +1560,4 @@ auth.onAuthStateChanged(user => {
 </script>
 </body>
 </html>
+
