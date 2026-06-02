@@ -313,6 +313,24 @@
   .confirm-row .lbl { color: var(--text-muted); flex-shrink: 0; }
   .confirm-row .val { font-weight: 600; text-align: right; }
 
+  /* ── MY BOOKINGS ── */
+  .booking-item {
+    background: var(--surface); border-radius: var(--radius);
+    padding: 22px; box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+    display: flex; gap: 20px; align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  .booking-color-bar {
+    width: 5px; border-radius: 4px; min-height: 80px; flex-shrink: 0;
+  }
+  .booking-info { flex: 1; min-width: 200px; }
+  .booking-service { font-size: 1rem; font-weight: 700; margin-bottom: 6px; }
+  .booking-meta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+  .booking-meta-item { display: flex; align-items: center; gap: 5px; font-size: 0.83rem; color: var(--text-muted); }
+  .booking-price { font-size: 1.2rem; font-weight: 800; color: var(--primary); }
+
   /* ── STATUS BADGE ── */
   .status {
     display: inline-block; padding: 4px 12px; border-radius: 100px;
@@ -363,6 +381,49 @@
     padding: 5px 10px; border-radius: 8px; border: 1.5px solid var(--border);
     font-size: 0.83rem; font-weight: 600; cursor: pointer;
     background: var(--surface);
+  }
+
+  .admin-action-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    min-width: 175px;
+  }
+  .notify-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 7px 10px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    text-align: center;
+  }
+  .notify-btn:hover { transform: translateY(-1px); opacity: 0.92; }
+  .notify-accept { background: #d1fae5; color: #065f46; }
+  .notify-decline { background: #fee2e2; color: #991b1b; }
+  .notify-email { background: #e8f0fe; color: #1558b0; }
+  .notify-email-decline { background: #fef3c7; color: #92400e; }
+  .contact-choice-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .contact-choice {
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 10px;
+    cursor: pointer;
+    background: var(--surface);
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .contact-choice:hover { border-color: var(--primary); background: #e8f0fe; }
+  .contact-choice input { width: auto; margin-right: 6px; accent-color: var(--primary); }
+  .contact-choice span { font-size: 0.86rem; font-weight: 700; }
+  .contact-choice small { display: block; margin-top: 4px; font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+  .preferred-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #e8f0fe; color: #1558b0;
+    border-radius: 100px; padding: 4px 10px;
+    font-size: 0.75rem; font-weight: 700;
+    margin-top: 6px;
   }
 
   /* ── CONTACT ── */
@@ -451,6 +512,7 @@
     .nav-burger { display: block; }
     .form-grid { grid-template-columns: 1fr; }
     .contact-grid { grid-template-columns: 1fr; }
+    .contact-choice-grid { grid-template-columns: 1fr; }
     .form-card { padding: 22px 18px; }
     .hero { padding: 50px 16px 40px; }
     .hero-stats { gap: 24px; }
@@ -638,6 +700,27 @@
                 <input type="email" id="bEmail" placeholder="e.g. john@email.com" />
                 <div class="error-msg" id="err-bEmail">Please enter a valid email address.</div>
               </div>
+              <div class="form-group full">
+                <label>Preferred Confirmation Method <span>*</span></label>
+                <div class="contact-choice-grid">
+                  <label class="contact-choice">
+                    <input type="radio" name="preferredContact" value="whatsapp" checked />
+                    <span>💬 WhatsApp</span>
+                    <small>Quickest option</small>
+                  </label>
+                  <label class="contact-choice">
+                    <input type="radio" name="preferredContact" value="email" />
+                    <span>📧 Email</span>
+                    <small>More formal</small>
+                  </label>
+                  <label class="contact-choice">
+                    <input type="radio" name="preferredContact" value="both" />
+                    <span>💬 + 📧 Both</span>
+                    <small>Best of both</small>
+                  </label>
+                </div>
+                <div class="error-msg" id="err-bPreferredContact">Please choose a confirmation method.</div>
+              </div>
             </div>
             <div style="margin-top:24px;display:flex;justify-content:flex-end;">
               <button type="button" class="btn btn-primary" onclick="goStep(2)">Next: Car & Location →</button>
@@ -701,6 +784,7 @@
                 <div class="confirm-row"><span class="lbl">Service</span><span class="val" id="sum-service"></span></div>
                 <div class="confirm-row"><span class="lbl">Car</span><span class="val" id="sum-car"></span></div>
                 <div class="confirm-row"><span class="lbl">Location</span><span class="val" id="sum-location"></span></div>
+                <div class="confirm-row"><span class="lbl">Preferred Contact</span><span class="val" id="sum-preferred-contact"></span></div>
                 <div class="confirm-row"><span class="lbl">Date</span><span class="val" id="sum-date"></span></div>
                 <div class="confirm-row"><span class="lbl">Time</span><span class="val" id="sum-time"></span></div>
                 <div class="confirm-row"><span class="lbl">Total</span><span class="val" style="color:var(--primary);font-size:1.1rem;" id="sum-price"></span></div>
@@ -723,12 +807,13 @@
     <div class="confirm-card">
       <div class="confirm-icon">✅</div>
       <h2 style="font-size:1.6rem;font-weight:800;margin-bottom:8px;">Booking Confirmed!</h2>
-      <p style="color:var(--text-muted);margin-bottom:16px;font-size:0.95rem;">Kiff! Your KiffDetailing booking has been received. We'll WhatsApp you on <strong>064 546 8559</strong> shortly to confirm.</p>
+      <p style="color:var(--text-muted);margin-bottom:16px;font-size:0.95rem;">Kiff! Your KiffDetailing booking request has been received. We will confirm it shortly using your preferred contact method.</p>
       <div class="confirm-id" id="confBookingId">Booking #SP-0001</div>
       <div class="confirm-details">
         <div class="confirm-row"><span class="lbl">👤 Customer</span><span class="val" id="conf-name"></span></div>
         <div class="confirm-row"><span class="lbl">📧 Email</span><span class="val" id="conf-email"></span></div>
         <div class="confirm-row"><span class="lbl">📞 Phone</span><span class="val" id="conf-phone"></span></div>
+        <div class="confirm-row"><span class="lbl">📨 Preferred Confirmation</span><span class="val" id="conf-preferred-contact"></span></div>
         <div class="confirm-row"><span class="lbl">✨ Service</span><span class="val" id="conf-service"></span></div>
         <div class="confirm-row"><span class="lbl">📅 Date</span><span class="val" id="conf-date"></span></div>
         <div class="confirm-row"><span class="lbl">⏰ Time</span><span class="val" id="conf-time"></span></div>
@@ -1049,6 +1134,18 @@ function cleanEmail(email) {
   return (email || '').trim().toLowerCase();
 }
 
+function getSelectedPreferredContact() {
+  const selected = document.querySelector('input[name="preferredContact"]:checked');
+  return selected ? selected.value : '';
+}
+
+function getPreferredContactLabel(value) {
+  if (value === 'whatsapp') return 'WhatsApp';
+  if (value === 'email') return 'Email';
+  if (value === 'both') return 'WhatsApp + Email';
+  return 'Not specified';
+}
+
 function normalizeBooking(doc) {
   const data = doc.data ? doc.data() : doc;
   const createdAt = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || '');
@@ -1216,6 +1313,9 @@ function initBookingForm() {
     const field = document.getElementById(id);
     if (field) field.oninput = updateSummary;
   });
+  document.querySelectorAll('input[name="preferredContact"]').forEach(el => {
+    el.onchange = updateSummary;
+  });
   document.getElementById('bDate').onchange = updateSummary;
 }
 
@@ -1260,13 +1360,15 @@ function updateSummary() {
   const make = document.getElementById('bMake').value;
   const model = document.getElementById('bModel').value;
   const location = document.getElementById('bLocation').value;
-  if (name || selectedService || date || selectedTime || location) {
+  const preferredContact = getSelectedPreferredContact();
+  if (name || selectedService || date || selectedTime || location || preferredContact) {
     summary.style.display = 'block';
     document.getElementById('sum-name').textContent = name || '—';
     const svc = SERVICES.find(s => s.id === selectedService);
     document.getElementById('sum-service').textContent = svc ? svc.name : '—';
     document.getElementById('sum-car').textContent = make && model ? `${make} ${model}` : '—';
     document.getElementById('sum-location').textContent = location || '—';
+    document.getElementById('sum-preferred-contact').textContent = getPreferredContactLabel(preferredContact);
     document.getElementById('sum-date').textContent = date ? formatDate(date) : '—';
     document.getElementById('sum-time').textContent = selectedTime || '—';
     document.getElementById('sum-price').textContent = svc ? `R${svc.price}` : '—';
@@ -1305,10 +1407,12 @@ function validateStep1() {
   const name = document.getElementById('bName').value.trim();
   const phone = document.getElementById('bPhone').value.trim();
   const email = document.getElementById('bEmail').value.trim();
+  const preferredContact = getSelectedPreferredContact();
   setError('bName', !name);
   setError('bPhone', !phone);
   setError('bEmail', !email || !email.includes('@'));
-  if (!name || !phone || !email || !email.includes('@')) ok = false;
+  setError('bPreferredContact', !preferredContact);
+  if (!name || !phone || !email || !email.includes('@') || !preferredContact) ok = false;
   return ok;
 }
 
@@ -1361,6 +1465,8 @@ async function submitBooking(e) {
     phone: document.getElementById('bPhone').value.trim(),
     email: document.getElementById('bEmail').value.trim(),
     emailLower: email,
+    preferredContact: getSelectedPreferredContact(),
+    preferredContactLabel: getPreferredContactLabel(getSelectedPreferredContact()),
     make: document.getElementById('bMake').value.trim(),
     model: document.getElementById('bModel').value.trim(),
     location: document.getElementById('bLocation').value.trim(),
@@ -1384,6 +1490,7 @@ async function submitBooking(e) {
     document.getElementById('conf-name').textContent = booking.name;
     document.getElementById('conf-email').textContent = booking.email;
     document.getElementById('conf-phone').textContent = booking.phone;
+    document.getElementById('conf-preferred-contact').textContent = booking.preferredContactLabel;
     document.getElementById('conf-service').textContent = booking.serviceName;
     document.getElementById('conf-date').textContent = formatDate(booking.date);
     document.getElementById('conf-time').textContent = booking.time;
@@ -1458,6 +1565,7 @@ async function renderAdmin() {
         <div style="font-weight:600;">${b.name}</div>
         <div style="font-size:0.78rem;color:var(--text-muted);">${b.email}</div>
         <div style="font-size:0.78rem;color:var(--text-muted);">${b.phone}</div>
+        <div class="preferred-pill">📨 Prefers ${getPreferredContactLabel(b.preferredContact)}</div>
       </td>
       <td>
         <div style="font-weight:600;">${serviceIcon(b.serviceId)} ${b.serviceName}</div>
@@ -1474,12 +1582,19 @@ async function renderAdmin() {
       <td><strong>R${b.servicePrice}</strong></td>
       <td><span class="status status-${b.status}">${capitalize(b.status)}</span></td>
       <td>
-        <select class="status-select" onchange="updateStatus('${b.id}', this.value)">
-          <option value="pending" ${b.status==='pending'?'selected':''}>Pending</option>
-          <option value="confirmed" ${b.status==='confirmed'?'selected':''}>Confirmed</option>
-          <option value="completed" ${b.status==='completed'?'selected':''}>Completed</option>
-          <option value="cancelled" ${b.status==='cancelled'?'selected':''}>Cancelled</option>
-        </select>
+        <div class="admin-action-buttons">
+          <select class="status-select" onchange="updateStatus('${b.id}', this.value)">
+            <option value="pending" ${b.status==='pending'?'selected':''}>Pending</option>
+            <option value="confirmed" ${b.status==='confirmed'?'selected':''}>Confirmed</option>
+            <option value="completed" ${b.status==='completed'?'selected':''}>Completed</option>
+            <option value="cancelled" ${b.status==='cancelled'?'selected':''}>Cancelled</option>
+          </select>
+          <div style="font-size:0.72rem;color:var(--text-muted);font-weight:700;">Preferred: ${getPreferredContactLabel(b.preferredContact)}</div>
+          <button class="notify-btn notify-accept" onclick="updateStatusAndNotify('${b.id}', 'confirmed', 'whatsapp')">Accept + WhatsApp${b.preferredContact === 'whatsapp' || b.preferredContact === 'both' ? ' ★' : ''}</button>
+          <button class="notify-btn notify-email" onclick="updateStatusAndNotify('${b.id}', 'confirmed', 'email')">Accept + Email${b.preferredContact === 'email' || b.preferredContact === 'both' ? ' ★' : ''}</button>
+          <button class="notify-btn notify-decline" onclick="updateStatusAndNotify('${b.id}', 'cancelled', 'whatsapp')">Decline + WhatsApp${b.preferredContact === 'whatsapp' || b.preferredContact === 'both' ? ' ★' : ''}</button>
+          <button class="notify-btn notify-email-decline" onclick="updateStatusAndNotify('${b.id}', 'cancelled', 'email')">Decline + Email${b.preferredContact === 'email' || b.preferredContact === 'both' ? ' ★' : ''}</button>
+        </div>
       </td>
     </tr>
   `).join('');
@@ -1498,6 +1613,153 @@ async function updateStatus(bookingId, newStatus) {
   } catch (err) {
     console.error(err);
     showToast('❌ Could not update booking status.');
+  }
+}
+
+
+function formatPhoneForWhatsApp(phone) {
+  let digits = (phone || '').replace(/\D/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('0027')) return digits.slice(2);
+  if (digits.startsWith('27')) return digits;
+  if (digits.startsWith('0')) return '27' + digits.slice(1);
+  return digits;
+}
+
+function buildStatusWhatsAppMessage(booking, status) {
+  const isAccepted = status === 'confirmed';
+  const heading = isAccepted
+    ? `Hi ${booking.name}, your KiffDetailing booking request has been ACCEPTED ✅`
+    : `Hi ${booking.name}, unfortunately your KiffDetailing booking request has been DECLINED ❌`;
+
+  const ending = isAccepted
+    ? 'We will see you then. Keep it clean. Keep it kiff.'
+    : 'Please reply to this message and we can help arrange another date or time. Keep it clean. Keep it kiff.';
+
+  return [
+    heading,
+    '',
+    `Booking ID: ${booking.id}`,
+    `Service: ${booking.serviceName}`,
+    `Date: ${formatDate(booking.date)}`,
+    `Time: ${booking.time}`,
+    `Car: ${booking.make} ${booking.model}`,
+    `Location: ${booking.location || 'Location not added'}`,
+    `Preferred confirmation method: ${getPreferredContactLabel(booking.preferredContact)}`,
+    '',
+    ending
+  ].join('\n');
+}
+
+function buildStatusEmailSubject(booking, status) {
+  return status === 'confirmed'
+    ? `KiffDetailing Booking Confirmed - ${booking.id}`
+    : `KiffDetailing Booking Update - ${booking.id}`;
+}
+
+function buildStatusEmailBody(booking, status) {
+  const isAccepted = status === 'confirmed';
+  const intro = isAccepted
+    ? `Your KiffDetailing booking request has been accepted.`
+    : `Unfortunately, your KiffDetailing booking request has been declined.`;
+
+  const ending = isAccepted
+    ? 'We look forward to cleaning your car. Keep it clean. Keep it kiff.'
+    : 'Please reply to this email or WhatsApp us on 064 546 8559 so we can help arrange another date or time.';
+
+  return [
+    `Hi ${booking.name},`,
+    '',
+    intro,
+    '',
+    'Booking details:',
+    `Booking ID: ${booking.id}`,
+    `Service: ${booking.serviceName}`,
+    `Date: ${formatDate(booking.date)}`,
+    `Time: ${booking.time}`,
+    `Car: ${booking.make} ${booking.model}`,
+    `Location: ${booking.location || 'Location not added'}`,
+    `Preferred confirmation method: ${getPreferredContactLabel(booking.preferredContact)}`,
+    `Total: R${booking.servicePrice}`,
+    '',
+    ending,
+    '',
+    'Kind regards,',
+    'KiffDetailing',
+    'Keep it clean. Keep it kiff.',
+    'WhatsApp: 064 546 8559'
+  ].join('\n');
+}
+
+function openCustomerWhatsApp(booking, status, existingTab) {
+  const whatsappNumber = formatPhoneForWhatsApp(booking.phone);
+  if (!whatsappNumber) {
+    showToast('⚠️ This booking does not have a valid phone number.');
+    return;
+  }
+  const message = encodeURIComponent(buildStatusWhatsAppMessage(booking, status));
+  const url = `https://wa.me/${whatsappNumber}?text=${message}`;
+  if (existingTab) existingTab.location.href = url;
+  else window.open(url, '_blank');
+}
+
+function openCustomerEmail(booking, status) {
+  const email = cleanEmail(booking.email);
+  if (!email || !email.includes('@')) {
+    showToast('⚠️ This booking does not have a valid email address.');
+    return;
+  }
+
+  const subject = encodeURIComponent(buildStatusEmailSubject(booking, status));
+  const body = encodeURIComponent(buildStatusEmailBody(booking, status));
+  window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
+}
+
+async function updateStatusAndNotify(bookingId, newStatus, channel) {
+  const booking = bookings.find(b => b.id === bookingId);
+  if (!booking) {
+    showToast('❌ Booking not found. Refresh Admin and try again.');
+    return;
+  }
+
+  if (channel === 'whatsapp' && !formatPhoneForWhatsApp(booking.phone)) {
+    showToast('⚠️ This booking does not have a valid phone number.');
+    return;
+  }
+
+  if (channel === 'email' && (!cleanEmail(booking.email) || !cleanEmail(booking.email).includes('@'))) {
+    showToast('⚠️ This booking does not have a valid email address.');
+    return;
+  }
+
+  // Open a blank WhatsApp tab immediately from the button click so popup blockers do not stop it.
+  const whatsappTab = channel === 'whatsapp' ? window.open('', '_blank') : null;
+
+  try {
+    await db.collection(BOOKINGS_COLLECTION).doc(bookingId).update({
+      status: newStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      notifiedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      notifiedStatus: newStatus,
+      notifiedVia: channel
+    });
+
+    booking.status = newStatus;
+    booking.notifiedStatus = newStatus;
+    booking.notifiedVia = channel;
+    renderAdmin();
+
+    if (channel === 'whatsapp') {
+      openCustomerWhatsApp(booking, newStatus, whatsappTab);
+      showToast(`💬 ${newStatus === 'confirmed' ? 'Accept' : 'Decline'} WhatsApp opened for ${booking.name}. Press Send in WhatsApp.`);
+    } else {
+      openCustomerEmail(booking, newStatus);
+      showToast(`📧 ${newStatus === 'confirmed' ? 'Accept' : 'Decline'} email opened for ${booking.name}. Press Send in your email app.`);
+    }
+  } catch (err) {
+    console.error(err);
+    if (whatsappTab) whatsappTab.close();
+    showToast('❌ Could not update booking before notifying customer.');
   }
 }
 
@@ -1560,4 +1822,3 @@ auth.onAuthStateChanged(user => {
 </script>
 </body>
 </html>
-
