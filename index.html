@@ -569,6 +569,452 @@
   .divider { height: 1px; background: var(--border); margin: 24px 0; }
 
   select option { color: var(--text); }
+
+
+  /* ════════════════════════════════════
+     SPORTY + PREMIUM REDESIGN
+     ════════════════════════════════════ */
+  :root {
+    --primary: #f4a20a;
+    --primary-dark: #c87905;
+    --accent: #ffb020;
+    --accent-dark: #d48c00;
+    --dark: #05070b;
+    --dark2: #0d1520;
+    --surface: #111827;
+    --surface2: #070b12;
+    --text: #f8fafc;
+    --text-muted: #a8b3c7;
+    --border: rgba(255,255,255,0.12);
+    --shadow: 0 14px 40px rgba(0,0,0,0.32);
+    --shadow-lg: 0 22px 70px rgba(0,0,0,0.48);
+  }
+
+  body {
+    background:
+      radial-gradient(circle at 10% 10%, rgba(244,162,10,0.12), transparent 28%),
+      radial-gradient(circle at 90% 0%, rgba(26,115,232,0.12), transparent 28%),
+      linear-gradient(180deg, #05070b 0%, #0a1018 48%, #05070b 100%);
+    color: var(--text);
+  }
+
+  nav {
+    height: 72px;
+    background: rgba(5, 7, 11, 0.88);
+    backdrop-filter: blur(18px);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 12px 34px rgba(0,0,0,0.35);
+  }
+
+  .nav-logo {
+    font-size: 1.3rem;
+    letter-spacing: 0.2px;
+  }
+
+  .nav-logo span,
+  footer a,
+  .footer-admin-link:hover { color: var(--accent); }
+
+  .nav-links a {
+    color: #c4cbd8;
+    border: 1px solid transparent;
+  }
+
+  .nav-links a:hover,
+  .nav-links a.active {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(255,255,255,0.12);
+  }
+
+  .nav-links a.nav-cta,
+  .btn-accent {
+    background: linear-gradient(135deg, #ffbc3a, #f4a20a 55%, #cf7d05);
+    color: #080a0f;
+    box-shadow: 0 12px 26px rgba(244,162,10,0.25);
+  }
+
+  .btn-primary {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.16);
+  }
+
+  .btn-primary:hover {
+    background: rgba(255,255,255,0.14);
+    box-shadow: 0 12px 26px rgba(255,255,255,0.08);
+  }
+
+  .btn-outline {
+    border: 1.5px solid rgba(255,255,255,0.22);
+    color: #fff;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .hero {
+    text-align: left;
+    padding: 86px 24px 72px;
+    background:
+      linear-gradient(120deg, rgba(5,7,11,0.94), rgba(5,7,11,0.68)),
+      radial-gradient(circle at 72% 42%, rgba(244,162,10,0.16), transparent 32%),
+      linear-gradient(135deg, #070b12 0%, #101b28 55%, #030507 100%);
+  }
+
+  .hero::before {
+    background:
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(0deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 72px 72px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.8), transparent 90%);
+  }
+
+  .premium-hero-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+    gap: 42px;
+    align-items: center;
+    position: relative;
+    z-index: 1;
+  }
+
+  .premium-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid rgba(244,162,10,0.4);
+    background: rgba(244,162,10,0.12);
+    color: var(--accent);
+    padding: 9px 16px;
+    border-radius: 100px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    margin-bottom: 22px;
+  }
+
+  .premium-hero-copy h1 {
+    font-size: clamp(2.4rem, 6.5vw, 5.4rem);
+    line-height: 0.95;
+    letter-spacing: -3px;
+    margin-bottom: 22px;
+    font-weight: 900;
+  }
+
+  .premium-hero-copy h1 span {
+    display: block;
+    color: var(--accent);
+  }
+
+  .premium-hero-copy p {
+    color: #c7d1df;
+    max-width: 620px;
+    font-size: 1.08rem;
+    line-height: 1.8;
+    margin: 0 0 30px;
+  }
+
+  .premium-proof-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .premium-proof-strip span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 13px;
+    border: 1px solid rgba(255,255,255,0.13);
+    background: rgba(255,255,255,0.055);
+    border-radius: 100px;
+    font-size: 0.83rem;
+    color: #d6deea;
+    font-weight: 700;
+  }
+
+  .premium-vehicle-card {
+    min-height: 420px;
+    border-radius: 28px;
+    overflow: hidden;
+    background:
+      radial-gradient(circle at 50% 48%, rgba(244,162,10,0.18), transparent 38%),
+      linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.035));
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 30px 85px rgba(0,0,0,0.52);
+    position: relative;
+  }
+
+  .premium-vehicle-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(120deg, rgba(255,255,255,0.12), transparent 32%),
+      linear-gradient(0deg, rgba(0,0,0,0.78), transparent 45%);
+  }
+
+  .premium-car-shape {
+    position: absolute;
+    left: 50%;
+    top: 44%;
+    width: 78%;
+    height: 120px;
+    transform: translate(-50%, -50%);
+    border-radius: 90px 120px 34px 34px;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,0.24), rgba(255,255,255,0.04)),
+      linear-gradient(135deg, #192535, #05070b 72%);
+    border: 1px solid rgba(255,255,255,0.18);
+    box-shadow: inset 0 -32px 45px rgba(0,0,0,0.4), 0 32px 60px rgba(0,0,0,0.5);
+  }
+
+  .premium-car-shape::before {
+    content: '';
+    position: absolute;
+    left: 18%; top: -46px;
+    width: 58%; height: 58px;
+    border-radius: 70px 90px 6px 6px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .premium-car-shape::after {
+    content: '';
+    position: absolute;
+    left: 10%; right: 10%; bottom: -22px;
+    height: 40px;
+    background: radial-gradient(circle at 20% 50%, #030507 0 22px, transparent 23px), radial-gradient(circle at 80% 50%, #030507 0 22px, transparent 23px);
+  }
+
+  .premium-vehicle-overlay {
+    position: absolute;
+    left: 24px; right: 24px; bottom: 24px;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .premium-mini-stat {
+    padding: 14px 12px;
+    border-radius: 16px;
+    background: rgba(5,7,11,0.72);
+    border: 1px solid rgba(255,255,255,0.12);
+    backdrop-filter: blur(12px);
+  }
+
+  .premium-mini-stat strong {
+    display: block;
+    color: var(--accent);
+    font-size: 1.05rem;
+    margin-bottom: 3px;
+  }
+
+  .premium-mini-stat small { color: #b8c2d0; font-weight: 700; }
+
+  .section,
+  .section-header { position: relative; }
+
+  .section-title,
+  .section-header .section-title,
+  .page-header h1 { color: #fff; }
+
+  .section-sub,
+  .page-header p { color: #a8b3c7; }
+
+  .premium-section-dark {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+    border-top: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .premium-split {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .premium-panel,
+  .feature-card,
+  .service-card,
+  .form-card,
+  .confirm-card,
+  .contact-card,
+  .admin-stat,
+  .lookup-box {
+    background: linear-gradient(180deg, rgba(255,255,255,0.085), rgba(255,255,255,0.035));
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: var(--shadow);
+  }
+
+  .premium-panel {
+    border-radius: 22px;
+    padding: 30px;
+  }
+
+  .premium-panel h3 { font-size: 1.45rem; margin-bottom: 12px; }
+  .premium-panel p { color: #a8b3c7; line-height: 1.8; }
+
+  .premium-checks {
+    display: grid;
+    gap: 12px;
+    margin-top: 22px;
+  }
+
+  .premium-checks div {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    color: #d7deea;
+    font-weight: 700;
+  }
+
+  .feature-card { text-align: left; padding: 26px; }
+  .feature-card h3 { color: #fff; }
+  .feature-card p { color: #a8b3c7; }
+  .feature-icon {
+    margin: 0 0 18px;
+    background: rgba(244,162,10,0.12);
+    border: 1px solid rgba(244,162,10,0.25);
+  }
+
+  .service-card { border-radius: 18px; }
+  .service-title { color: #fff; }
+  .service-desc,
+  .service-meta-item { color: #a8b3c7; }
+  .service-footer { background: rgba(0,0,0,0.18); border-top: 1px solid rgba(255,255,255,0.08); }
+  .service-price { color: var(--accent); }
+  .service-badge { background: rgba(244,162,10,0.16); color: var(--accent); }
+
+  .page-header {
+    background:
+      radial-gradient(circle at 50% 0%, rgba(244,162,10,0.16), transparent 38%),
+      linear-gradient(135deg, #05070b, #101b28);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    padding: 54px 24px 46px;
+  }
+
+  input,
+  select,
+  textarea,
+  .status-select {
+    background: rgba(0,0,0,0.22);
+    border: 1.5px solid rgba(255,255,255,0.14);
+    color: #fff;
+  }
+
+  input::placeholder,
+  textarea::placeholder { color: rgba(255,255,255,0.42); }
+  label { color: #eaf0f8; }
+  .form-section-title { color: var(--accent); }
+  .form-section-title::after,
+  .divider { background: rgba(255,255,255,0.1); }
+
+  .contact-choice {
+    background: rgba(0,0,0,0.18) !important;
+    border-color: rgba(255,255,255,0.12) !important;
+  }
+
+  .confirm-details { background: rgba(0,0,0,0.22); }
+  .confirm-row { border-bottom-color: rgba(255,255,255,0.1); }
+  .confirm-row .lbl { color: #a8b3c7; }
+  .confirm-row .val { color: #fff; }
+
+  .slot {
+    background: rgba(255,255,255,0.06);
+    color: #fff;
+    border-color: rgba(255,255,255,0.13);
+  }
+  .slot:hover,
+  .slot.selected {
+    background: var(--accent);
+    color: #05070b;
+    border-color: var(--accent);
+  }
+
+  .premium-gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+  }
+
+  .premium-gallery-card {
+    min-height: 210px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.12);
+    background:
+      linear-gradient(180deg, transparent, rgba(0,0,0,0.84)),
+      radial-gradient(circle at 50% 35%, rgba(244,162,10,0.28), transparent 36%),
+      linear-gradient(135deg, #172232, #05070b);
+    position: relative;
+    box-shadow: var(--shadow);
+  }
+
+  .premium-gallery-card::before {
+    content: '';
+    position: absolute;
+    left: 18%; right: 18%; top: 34%; height: 54px;
+    border-radius: 50px 50px 18px 18px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.03));
+    border: 1px solid rgba(255,255,255,0.12);
+  }
+
+  .premium-gallery-card span {
+    position: absolute;
+    left: 18px; right: 18px; bottom: 18px;
+    color: #fff;
+    font-weight: 800;
+  }
+
+  .premium-cta-band {
+    margin-top: 40px;
+    border-radius: 28px;
+    padding: 34px;
+    background:
+      radial-gradient(circle at 92% 20%, rgba(244,162,10,0.28), transparent 30%),
+      linear-gradient(135deg, rgba(244,162,10,0.15), rgba(255,255,255,0.04));
+    border: 1px solid rgba(244,162,10,0.22);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .premium-cta-band h3 { font-size: 1.6rem; margin-bottom: 8px; }
+  .premium-cta-band p { color: #a8b3c7; }
+
+  .admin-table { background: rgba(255,255,255,0.04); }
+  .admin-table th { background: rgba(0,0,0,0.42); }
+  .admin-table td { border-color: rgba(255,255,255,0.08); color: #e6edf7; }
+  .admin-table tr:hover td { background: rgba(255,255,255,0.055); }
+
+  footer {
+    background: #030507;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  @media (max-width: 850px) {
+    .premium-hero-inner,
+    .premium-split { grid-template-columns: 1fr; }
+    .premium-vehicle-card { min-height: 330px; }
+    .premium-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    .premium-hero-copy h1 { letter-spacing: -1.5px; }
+  }
+
+  @media (max-width: 640px) {
+    .premium-hero-inner { gap: 28px; }
+    .hero { padding: 48px 16px; }
+    .premium-vehicle-overlay { grid-template-columns: 1fr; }
+    .premium-gallery-grid { grid-template-columns: 1fr; }
+    .premium-cta-band { padding: 24px; }
+  }
+
 </style>
 </head>
 <body>
@@ -589,64 +1035,93 @@
 
 <!-- ═══════════════ HOME PAGE ═══════════════ -->
 <div id="page-home" class="page active">
-  <!-- Hero -->
   <div class="hero">
-    <div class="hero-badge">✦ Keep it clean. Keep it kiff.</div>
-    <h1>Your Car Deserves<br><span>A Kiff Clean</span></h1>
-    <p>Premium mobile car cleaning and detailing services based in Sandton / Sunninghill. We come to you — book in minutes, we do the rest.</p>
-    <div class="hero-btns">
-      <button class="btn btn-accent btn-lg" onclick="chooseServiceFirst()">🗓 Choose a Service</button>
-      <button class="btn btn-outline btn-lg" onclick="showPage('services')">View Services</button>
-      <button class="btn btn-outline btn-lg" onclick="showPage('contact')">Contact Us</button>
-    </div>
-    <div style="margin-top:28px;display:inline-flex;align-items:center;gap:8px;background:rgba(244,162,10,0.18);border:1px solid rgba(244,162,10,0.45);border-radius:100px;padding:8px 20px;">
-      <span style="font-size:1rem;">📍</span>
-      <span style="font-size:0.88rem;font-weight:700;color:var(--accent);letter-spacing:0.3px;">We come to you — Sandton / Sunninghill</span>
-    </div>
-    <div class="hero-stats">
-      <div class="hero-stat"><div class="num">⚡</div><div class="lbl">Quick Booking</div></div>
-      <div class="hero-stat"><div class="num">✨</div><div class="lbl">Quality Cleaning</div></div>
-      <div class="hero-stat"><div class="num">💰</div><div class="lbl">Affordable Packages</div></div>
-      <div class="hero-stat"><div class="num">😊</div><div class="lbl">Friendly Service</div></div>
+    <div class="premium-hero-inner">
+      <div class="premium-hero-copy">
+        <div class="premium-kicker">✦ Mobile detailing · Sandton / Sunninghill</div>
+        <h1>Detailing that<br><span>hits different.</span></h1>
+        <p>KiffDetailing brings a sporty, premium clean straight to your home, office, or chosen location. Simple online booking, quality products, and a finish that makes your car feel fresh again.</p>
+        <div class="hero-btns" style="justify-content:flex-start;">
+          <button class="btn btn-accent btn-lg" onclick="chooseServiceFirst()">Book a Detail</button>
+          <button class="btn btn-outline btn-lg" onclick="showPage('services')">View Packages</button>
+          <button class="btn btn-outline btn-lg" onclick="showPage('contact')">WhatsApp Us</button>
+        </div>
+        <div class="premium-proof-strip">
+          <span>📍 We come to you</span>
+          <span>🗓 Live availability</span>
+          <span>✨ 4-hour service window</span>
+          <span>💬 WhatsApp or email confirmation</span>
+        </div>
+      </div>
+
+      <div class="premium-vehicle-card" aria-label="Premium car detailing visual">
+        <div class="premium-car-shape"></div>
+        <div class="premium-vehicle-overlay">
+          <div class="premium-mini-stat"><strong>Mobile</strong><small>Home or office</small></div>
+          <div class="premium-mini-stat"><strong>Premium</strong><small>Products & care</small></div>
+          <div class="premium-mini-stat"><strong>Kiff</strong><small>Clean finish</small></div>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Why Us -->
   <div class="section">
-    <div class="section-header">
-      <div class="section-title">Why Choose KiffDetailing?</div>
-      <div class="section-sub">Mobile car cleaning — we come to your home, office, or chosen location in Sandton / Sunninghill</div>
-    </div>
-    <div class="feature-grid">
-      <div class="feature-card" onclick="chooseServiceFirst()">
-        <div class="feature-icon">🗓</div>
-        <h3>Easy Online Booking</h3>
-        <p>Book your service in under 2 minutes. Pick your package, date, and time — it's that simple.</p>
+    <div class="premium-split">
+      <div class="premium-panel">
+        <div class="premium-kicker" style="margin-bottom:18px;">Keep it clean. Keep it kiff.</div>
+        <h3>Mobile car cleaning made simple.</h3>
+        <p>Choose your package, select an available time, and send through your details. We bring the clean to you, so there is no waiting at a car wash or rearranging your whole day.</p>
+        <div class="premium-checks">
+          <div>✅ Sandton / Sunninghill service area</div>
+          <div>✅ Clear packages and upfront prices</div>
+          <div>✅ Admin confirmation by WhatsApp or email</div>
+        </div>
       </div>
-      <div class="feature-card" onclick="showPage('services')">
-        <div class="feature-icon">✨</div>
-        <h3>Professional Results</h3>
-        <p>We use premium products and proven techniques to deliver a showroom-quality finish every time.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📍</div>
-        <h3>We Come to You</h3>
-        <p>No need to travel. We come to your home, office, or any chosen location. Convenience is our priority.</p>
-      </div>
-      <div class="feature-card" onclick="showPage('contact')">
-        <div class="feature-icon">💬</div>
-        <h3>Friendly Support</h3>
-        <p>Have a question? Our team is always ready to help before, during, and after your booking.</p>
+      <div class="feature-grid" style="grid-template-columns:repeat(auto-fit,minmax(210px,1fr));">
+        <div class="feature-card" onclick="chooseServiceFirst()">
+          <div class="feature-icon">🗓</div>
+          <h3>Easy Booking</h3>
+          <p>Pick your service, date, and available time slot in a few clicks.</p>
+        </div>
+        <div class="feature-card" onclick="showPage('services')">
+          <div class="feature-icon">✨</div>
+          <h3>Premium Finish</h3>
+          <p>From quick washes to full details, the focus is a sharper, cleaner finish.</p>
+        </div>
+        <div class="feature-card" onclick="showPage('contact')">
+          <div class="feature-icon">📍</div>
+          <h3>We Come to You</h3>
+          <p>Home, office, complex, or chosen location in the service area.</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔐</div>
+          <h3>Managed Properly</h3>
+          <p>Your booking is saved online and confirmed by the KiffDetailing team.</p>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- Services quick preview -->
-  <div style="background:var(--dark);padding:60px 24px;text-align:center;color:#fff;">
-    <div style="font-size:1.8rem;font-weight:800;margin-bottom:10px;">Ready to Book?</div>
-    <div style="color:#a8bfd4;margin-bottom:8px;font-size:1rem;">Choose from our range of professional KiffDetailing packages</div>
-    <div style="color:var(--accent);font-weight:700;font-size:1rem;margin-bottom:20px;">📍 Based in Sandton / Sunninghill &nbsp;·&nbsp; We come to you.</div>
-    <button class="btn btn-accent btn-lg" onclick="showPage('services')">View All Services →</button>
+  <div class="premium-section-dark">
+    <div class="section">
+      <div class="section-header">
+        <div class="section-title">A cleaner car, without the mission.</div>
+        <div class="section-sub">Choose a package that fits your car, your schedule, and the level of detail you want.</div>
+      </div>
+      <div class="premium-gallery-grid">
+        <div class="premium-gallery-card"><span>Exterior Wash</span></div>
+        <div class="premium-gallery-card"><span>Interior Clean</span></div>
+        <div class="premium-gallery-card"><span>Full Wash</span></div>
+        <div class="premium-gallery-card"><span>Full Detail</span></div>
+      </div>
+      <div class="premium-cta-band">
+        <div>
+          <h3>Ready to give your car that kiff clean?</h3>
+          <p>View the packages and choose an available time that works for you.</p>
+        </div>
+        <button class="btn btn-accent btn-lg" onclick="showPage('services')">View Services →</button>
+      </div>
+    </div>
   </div>
 </div>
 
