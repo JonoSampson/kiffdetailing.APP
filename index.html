@@ -903,9 +903,14 @@
       <div class="form-card">
         <div class="form-section-title">⚙ Admin Access</div>
         <div class="form-group full" style="margin-bottom:16px;">
+          <label>Admin Email <span>*</span></label>
+          <input type="email" id="adminEmail" placeholder="Enter admin email" onkeydown="if(event.key === 'Enter') adminLogin();" />
+          <div class="error-msg" id="err-adminEmail">Please enter the admin email.</div>
+        </div>
+        <div class="form-group full" style="margin-bottom:16px;">
           <label>Admin Password <span>*</span></label>
           <input type="password" id="adminPassword" placeholder="Enter admin password" onkeydown="if(event.key === 'Enter') adminLogin();" />
-          <div class="error-msg" id="err-adminPassword">Incorrect password. Please try again.</div>
+          <div class="error-msg" id="err-adminPassword">Incorrect email or password. Please try again.</div>
         </div>
         <button type="button" class="btn btn-primary btn-block" onclick="adminLogin()">Login to Admin Panel</button>
         <button type="button" class="btn btn-outline btn-block" style="margin-top:10px;color:var(--text);border-color:var(--border);" onclick="showPage('home')">Back to Home</button>
@@ -922,7 +927,7 @@
   </div>
   <div class="section">
     <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
-      <div style="font-weight:700;color:var(--text-muted);font-size:0.9rem;">Logged in as Admin</div>
+      <div style="font-weight:700;color:var(--text-muted);font-size:0.9rem;" id="adminLoggedInLabel">Logged in as Admin</div>
       <button class="btn btn-danger btn-sm" onclick="adminLogout()">Logout</button>
     </div>
     <!-- Stats -->
@@ -979,6 +984,11 @@
   <div style="font-size:0.78rem;color:#5a7080;margin-bottom:8px;">© 2026 KiffDetailing. All rights reserved.</div>
   <a href="#" class="footer-admin-link" onclick="showAdminLogin()">Admin Login</a>
 </footer>
+
+<!-- Firebase SDKs for GitHub Pages / one-file HTML app -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 
 <script>
 // ════════════════════════════════════
@@ -1044,16 +1054,53 @@ const SERVICES = [
 
 const TIME_SLOTS = ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM'];
 
-let bookings = JSON.parse(localStorage.getItem('kiffdetailing_bookings') || '[]');
+// Firebase configuration for KiffDetailing
+const firebaseConfig = {
+  apiKey: "AIzaSyBiLtRgQjFgUPD9bi24Iah8G63bVyJofP0",
+  authDomain: "kiffdetailing.firebaseapp.com",
+  projectId: "kiffdetailing",
+  storageBucket: "kiffdetailing.firebasestorage.app",
+  messagingSenderId: "1015108753888",
+  appId: "1:1015108753888:web:4a4b41a20217a90c13f385",
+  measurementId: "G-B3Q6SY6HS0"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
+const BOOKINGS_COLLECTION = 'bookings';
+
+// Keep admin login only for the current browser session.
+auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.warn);
+
+let bookings = [];
 let selectedService = null;
 let selectedTime = null;
-let bookingCounter = bookings.length + 1;
+let isAdminLoggedIn = false;
 
-// Temporary prototype admin password.
-// IMPORTANT: Because this app is currently a public static HTML file, do not use a real private password here.
-// For a real business, replace this later with Firebase Authentication and Firestore Security Rules.
-const ADMIN_PASSWORD = 'kiff2026';
-let isAdminLoggedIn = sessionStorage.getItem('kiffdetailing_admin_logged_in') === 'true';
+function makeBookingId() {
+  const now = new Date();
+  const datePart = now.toISOString().slice(2,10).replace(/-/g, '');
+  const rand = Math.floor(1000 + Math.random() * 9000);
+  return `KD-${datePart}-${rand}`;
+}
+
+function cleanEmail(email) {
+  return (email || '').trim().toLowerCase();
+}
+
+function normalizeBooking(doc) {
+  const data = doc.data ? doc.data() : doc;
+  const createdAt = data.createdAt && data.createdAt.toDate ? data.createdAt.toDate().toISOString() : (data.createdAt || '');
+  const updatedAt = data.updatedAt && data.updatedAt.toDate ? data.updatedAt.toDate().toISOString() : (data.updatedAt || '');
+  return { ...data, docId: doc.id || data.id, createdAt, updatedAt };
+}
+
+async function loadAllBookingsFromFirestore() {
+  const snap = await db.collection(BOOKINGS_COLLECTION).get();
+  bookings = snap.docs.map(normalizeBooking);
+  return bookings;
+}
 
 // ════════════════════════════════════
 //  NAVIGATION
@@ -1094,34 +1141,48 @@ function showAdminLogin() {
   document.getElementById('navLinks').classList.remove('open');
   window.scrollTo(0, 0);
   setTimeout(() => {
-    const pass = document.getElementById('adminPassword');
-    if (pass) pass.focus();
+    const email = document.getElementById('adminEmail');
+    if (email) email.focus();
   }, 50);
 }
 
-function adminLogin() {
+async function adminLogin() {
+  const emailField = document.getElementById('adminEmail');
   const passwordField = document.getElementById('adminPassword');
-  const error = document.getElementById('err-adminPassword');
-  const enteredPassword = passwordField.value.trim();
+  const emailError = document.getElementById('err-adminEmail');
+  const passwordError = document.getElementById('err-adminPassword');
+  const email = cleanEmail(emailField.value);
+  const password = passwordField.value;
 
-  if (enteredPassword === ADMIN_PASSWORD) {
+  emailField.classList.toggle('error', !email);
+  emailError.classList.toggle('show', !email);
+  passwordField.classList.remove('error');
+  passwordError.classList.remove('show');
+
+  if (!email || !password) {
+    passwordField.classList.toggle('error', !password);
+    passwordError.classList.toggle('show', !password);
+    showToast('⚠️ Please enter admin email and password.');
+    return;
+  }
+
+  try {
+    await auth.signInWithEmailAndPassword(email, password);
     isAdminLoggedIn = true;
-    sessionStorage.setItem('kiffdetailing_admin_logged_in', 'true');
     passwordField.value = '';
-    passwordField.classList.remove('error');
-    error.classList.remove('show');
     showToast('✅ Admin login successful.');
     showPage('admin');
-  } else {
+  } catch (err) {
+    console.error(err);
     passwordField.classList.add('error');
-    error.classList.add('show');
-    showToast('❌ Incorrect admin password.');
+    passwordError.classList.add('show');
+    showToast('❌ Incorrect email or password.');
   }
 }
 
-function adminLogout() {
+async function adminLogout() {
+  await auth.signOut();
   isAdminLoggedIn = false;
-  sessionStorage.removeItem('kiffdetailing_admin_logged_in');
   showToast('👋 Logged out of Admin.');
   showPage('home');
 }
@@ -1329,16 +1390,18 @@ function setError(id, show) {
 // ════════════════════════════════════
 //  SUBMIT BOOKING
 // ════════════════════════════════════
-function submitBooking(e) {
+async function submitBooking(e) {
   e.preventDefault();
   if (!validateStep3()) return;
 
   const svc = SERVICES.find(s => s.id === selectedService);
+  const email = cleanEmail(document.getElementById('bEmail').value);
   const booking = {
-    id: 'KD-' + String(bookingCounter++).padStart(4, '0'),
+    id: makeBookingId(),
     name: document.getElementById('bName').value.trim(),
     phone: document.getElementById('bPhone').value.trim(),
     email: document.getElementById('bEmail').value.trim(),
+    emailLower: email,
     make: document.getElementById('bMake').value.trim(),
     model: document.getElementById('bModel').value.trim(),
     location: document.getElementById('bLocation').value.trim(),
@@ -1349,74 +1412,107 @@ function submitBooking(e) {
     time: selectedTime,
     notes: document.getElementById('bNotes').value.trim(),
     status: 'pending',
-    createdAt: new Date().toISOString()
+    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
   };
 
-  bookings.push(booking);
-  localStorage.setItem('kiffdetailing_bookings', JSON.stringify(bookings));
+  try {
+    await db.collection(BOOKINGS_COLLECTION).doc(booking.id).set(booking);
+    bookings.push({ ...booking, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
 
-  // Populate confirmation page
-  document.getElementById('confBookingId').textContent = 'Booking #' + booking.id;
-  document.getElementById('conf-name').textContent = booking.name;
-  document.getElementById('conf-email').textContent = booking.email;
-  document.getElementById('conf-phone').textContent = booking.phone;
-  document.getElementById('conf-service').textContent = booking.serviceName;
-  document.getElementById('conf-date').textContent = formatDate(booking.date);
-  document.getElementById('conf-time').textContent = booking.time;
-  document.getElementById('conf-car').textContent = `${booking.make} ${booking.model}`;
-  document.getElementById('conf-location').textContent = booking.location;
-  document.getElementById('conf-price').textContent = `R${booking.servicePrice}`;
+    // Populate confirmation page
+    document.getElementById('confBookingId').textContent = 'Booking #' + booking.id;
+    document.getElementById('conf-name').textContent = booking.name;
+    document.getElementById('conf-email').textContent = booking.email;
+    document.getElementById('conf-phone').textContent = booking.phone;
+    document.getElementById('conf-service').textContent = booking.serviceName;
+    document.getElementById('conf-date').textContent = formatDate(booking.date);
+    document.getElementById('conf-time').textContent = booking.time;
+    document.getElementById('conf-car').textContent = `${booking.make} ${booking.model}`;
+    document.getElementById('conf-location').textContent = booking.location;
+    document.getElementById('conf-price').textContent = `R${booking.servicePrice}`;
 
-  showPage('confirmation');
-  showToast('🎉 Kiff! Booking confirmed! #' + booking.id);
+    showPage('confirmation');
+    showToast('🎉 Kiff! Booking saved online! #' + booking.id);
+  } catch (err) {
+    console.error(err);
+    showToast('❌ Booking could not be saved. Check Firebase/Firestore setup.');
+  }
 }
 
 // ════════════════════════════════════
 //  MY BOOKINGS
 // ════════════════════════════════════
-function lookupBookings() {
-  const email = document.getElementById('lookupEmail').value.trim().toLowerCase();
+async function lookupBookings() {
+  const email = cleanEmail(document.getElementById('lookupEmail').value);
   const list = document.getElementById('myBookingsList');
   if (!email) { showToast('⚠️ Please enter your email address.'); return; }
 
-  const found = bookings.filter(b => b.email.toLowerCase() === email);
-  if (found.length === 0) {
-    list.innerHTML = `<div class="empty-state"><div class="ei">📭</div><h3>No bookings found</h3><p>We couldn't find any bookings for <strong>${email}</strong>. Double-check your email or <a href="#" onclick="chooseServiceFirst()" style="color:var(--primary);">make a booking with KiffDetailing</a>.</p></div>`;
-    return;
-  }
+  list.innerHTML = `<div class="empty-state"><div class="ei">⏳</div><h3>Searching...</h3><p>Checking your online bookings.</p></div>`;
 
-  list.innerHTML = found.sort((a,b) => new Date(b.date) - new Date(a.date)).map(b => `
-    <div class="booking-item">
-      <div class="booking-color-bar" style="background:${statusColor(b.status)};"></div>
-      <div class="booking-info">
-        <div class="booking-service">${serviceIcon(b.serviceId)} ${b.serviceName}</div>
-        <div style="margin-top:4px;"><span class="status status-${b.status}">${capitalize(b.status)}</span></div>
-        <div class="booking-meta-row">
-          <div class="booking-meta-item">📅 ${formatDate(b.date)}</div>
-          <div class="booking-meta-item">⏰ ${b.time}</div>
-          <div class="booking-meta-item">🚘 ${b.make} ${b.model}</div>
-          <div class="booking-meta-item">📍 ${b.location || 'Location not added'}</div>
-          <div class="booking-meta-item">🏷 #${b.id}</div>
+  try {
+    const snap = await db.collection(BOOKINGS_COLLECTION).where('emailLower', '==', email).get();
+    const found = snap.docs.map(normalizeBooking).sort((a,b) => new Date(b.date) - new Date(a.date));
+
+    if (found.length === 0) {
+      list.innerHTML = `<div class="empty-state"><div class="ei">📭</div><h3>No bookings found</h3><p>We couldn't find any bookings for <strong>${email}</strong>. Double-check your email or <a href="#" onclick="chooseServiceFirst()" style="color:var(--primary);">make a booking with KiffDetailing</a>.</p></div>`;
+      return;
+    }
+
+    list.innerHTML = found.map(b => `
+      <div class="booking-item">
+        <div class="booking-color-bar" style="background:${statusColor(b.status)};"></div>
+        <div class="booking-info">
+          <div class="booking-service">${serviceIcon(b.serviceId)} ${b.serviceName}</div>
+          <div style="margin-top:4px;"><span class="status status-${b.status}">${capitalize(b.status)}</span></div>
+          <div class="booking-meta-row">
+            <div class="booking-meta-item">📅 ${formatDate(b.date)}</div>
+            <div class="booking-meta-item">⏰ ${b.time}</div>
+            <div class="booking-meta-item">🚘 ${b.make} ${b.model}</div>
+            <div class="booking-meta-item">📍 ${b.location || 'Location not added'}</div>
+            <div class="booking-meta-item">🏷 #${b.id}</div>
+          </div>
+          ${b.notes ? `<div style="margin-top:8px;font-size:0.82rem;color:var(--text-muted);">📝 ${b.notes}</div>` : ''}
         </div>
-        ${b.notes ? `<div style="margin-top:8px;font-size:0.82rem;color:var(--text-muted);">📝 ${b.notes}</div>` : ''}
+        <div>
+          <div class="booking-price">R${b.servicePrice}</div>
+        </div>
       </div>
-      <div>
-        <div class="booking-price">R${b.servicePrice}</div>
-      </div>
-    </div>
-  `).join('');
+    `).join('');
+  } catch (err) {
+    console.error(err);
+    list.innerHTML = `<div class="empty-state"><div class="ei">⚠️</div><h3>Could not load bookings</h3><p>Please check that Firestore is created and your security rules allow this test.</p></div>`;
+    showToast('❌ Could not load bookings from Firebase.');
+  }
 }
 
 // ════════════════════════════════════
 //  ADMIN
 // ════════════════════════════════════
-function renderAdmin() {
+async function renderAdmin() {
   if (!isAdminLoggedIn) {
     showAdminLogin();
     showToast('🔐 Please log in to access the Admin Panel.');
     return;
   }
-  bookings = JSON.parse(localStorage.getItem('kiffdetailing_bookings') || '[]');
+
+  const label = document.getElementById('adminLoggedInLabel');
+  if (label && auth.currentUser) label.textContent = `Logged in as ${auth.currentUser.email}`;
+
+  const tbody = document.getElementById('adminTableBody');
+  const empty = document.getElementById('adminEmpty');
+  tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;">Loading bookings from Firebase...</td></tr>`;
+  empty.style.display = 'none';
+
+  try {
+    await loadAllBookingsFromFirestore();
+  } catch (err) {
+    console.error(err);
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--danger);">Could not load bookings. Check Firestore and admin login.</td></tr>`;
+    showToast('❌ Could not load admin bookings from Firebase.');
+    return;
+  }
+
   const filter = document.getElementById('adminFilter').value;
   const filtered = filter === 'all' ? bookings : bookings.filter(b => b.status === filter);
 
@@ -1425,7 +1521,7 @@ function renderAdmin() {
   const total = bookings.length;
   const pending = bookings.filter(b => b.status === 'pending').length;
   const confirmed = bookings.filter(b => b.status === 'confirmed').length;
-  const revenue = bookings.filter(b => b.status !== 'cancelled').reduce((a, b) => a + b.servicePrice, 0);
+  const revenue = bookings.filter(b => b.status !== 'cancelled').reduce((a, b) => a + Number(b.servicePrice || 0), 0);
   stats.innerHTML = `
     <div class="admin-stat blue"><div class="num">${total}</div><div class="lbl">Total Bookings</div></div>
     <div class="admin-stat yellow"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
@@ -1434,8 +1530,6 @@ function renderAdmin() {
   `;
 
   document.getElementById('adminCount').textContent = `Showing ${filtered.length} booking${filtered.length !== 1 ? 's' : ''}`;
-  const tbody = document.getElementById('adminTableBody');
-  const empty = document.getElementById('adminEmpty');
 
   if (filtered.length === 0) {
     tbody.innerHTML = '';
@@ -1444,7 +1538,7 @@ function renderAdmin() {
   }
   empty.style.display = 'none';
 
-  tbody.innerHTML = filtered.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(b => `
+  tbody.innerHTML = filtered.sort((a,b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)).map(b => `
     <tr>
       <td><span style="font-size:0.82rem;font-weight:700;color:var(--primary);">#${b.id}</span></td>
       <td>
@@ -1478,13 +1572,19 @@ function renderAdmin() {
   `).join('');
 }
 
-function updateStatus(bookingId, newStatus) {
-  const idx = bookings.findIndex(b => b.id === bookingId);
-  if (idx !== -1) {
-    bookings[idx].status = newStatus;
-    localStorage.setItem('kiffdetailing_bookings', JSON.stringify(bookings));
+async function updateStatus(bookingId, newStatus) {
+  try {
+    await db.collection(BOOKINGS_COLLECTION).doc(bookingId).update({
+      status: newStatus,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const idx = bookings.findIndex(b => b.id === bookingId);
+    if (idx !== -1) bookings[idx].status = newStatus;
     renderAdmin();
     showToast(`✅ KiffDetailing — Booking #${bookingId} → ${capitalize(newStatus)}`);
+  } catch (err) {
+    console.error(err);
+    showToast('❌ Could not update booking status.');
   }
 }
 
@@ -1539,17 +1639,11 @@ function submitContact() {
 // ════════════════════════════════════
 renderServices();
 
-// Seed demo data if empty
-if (bookings.length === 0) {
-  const demoBookings = [
-    { id:'KD-0001', name:'James Wilson', phone:'071 234 5678', email:'james@email.com', make:'Ford', model:'Focus', location:'Sandton / Sunninghill', serviceId:'full-wash', serviceName:'Full Interior & Exterior Wash', servicePrice:400, date:'2026-07-15', time:'9:00 AM', notes:'', status:'confirmed', createdAt:'2025-07-10T10:00:00Z' },
-    { id:'KD-0002', name:'Sarah Ahmed', phone:'082 345 6789', email:'sarah@email.com', make:'BMW', model:'3 Series', location:'Sandton / Sunninghill', serviceId:'full-detail', serviceName:'Full Detail', servicePrice:1500, date:'2026-07-16', time:'8:00 AM', notes:'Please take extra care around the rear bumper.', status:'pending', createdAt:'2025-07-11T14:30:00Z' },
-    { id:'KD-0003', name:'Mike Thompson', phone:'083 456 7890', email:'mike@email.com', make:'Toyota', model:'Corolla', location:'Sandton / Sunninghill', serviceId:'ext-wash', serviceName:'Exterior Wash', servicePrice:150, date:'2026-07-14', time:'11:00 AM', notes:'', status:'completed', createdAt:'2025-07-09T09:15:00Z' }
-  ];
-  bookings = demoBookings;
-  bookingCounter = 4;
-  localStorage.setItem('kiffdetailing_bookings', JSON.stringify(bookings));
-}
+auth.onAuthStateChanged(user => {
+  isAdminLoggedIn = !!user;
+  const label = document.getElementById('adminLoggedInLabel');
+  if (label && user) label.textContent = `Logged in as ${user.email}`;
+});
 </script>
 </body>
 </html>
