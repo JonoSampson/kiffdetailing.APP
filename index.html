@@ -784,7 +784,7 @@
             <div class="divider"></div>
             <div class="form-section-title">⏰ Choose Time Slot</div>
             <div class="time-slots" id="timeSlots"></div>
-            <div id="availabilityNote" class="availability-note">Choose a date to see unavailable times. Booked times will be greyed out.</div>
+            <div id="availabilityNote" class="availability-note">Choose a date to see available times. Each booking reserves a 4-hour service window.</div>
             <div class="error-msg" id="err-bTime" style="margin-top:8px;">Please select a time slot.</div>
             <div style="margin-top:32px;">
               <!-- Summary -->
@@ -1108,6 +1108,7 @@ const SERVICES = [
 ];
 
 const TIME_SLOTS = ['8:00 AM','9:00 AM','10:00 AM','11:00 AM','12:00 PM','1:00 PM','2:00 PM','3:00 PM','4:00 PM'];
+const SERVICE_WINDOW_HOURS = 4; // Each booking blocks a 4-hour service window.
 
 // Firebase configuration for KiffDetailing
 const firebaseConfig = {
@@ -1186,20 +1187,45 @@ function sortTimes(times) {
   });
 }
 
+function getBlockedServiceWindowTimes(startTime) {
+  const startIndex = TIME_SLOTS.indexOf(startTime);
+  if (startIndex === -1) return [startTime].filter(Boolean);
+
+  // A 4-hour job starting at 3PM means no other booking can start at 12PM, 1PM, 2PM, 3PM, or 4PM.
+  // This blocks any slot that would overlap with the 4-hour service window.
+  const blocked = [];
+  for (let i = 0; i < TIME_SLOTS.length; i++) {
+    if (Math.abs(i - startIndex) < SERVICE_WINDOW_HOURS) {
+      blocked.push(TIME_SLOTS[i]);
+    }
+  }
+  return blocked;
+}
+
+function expandBookedTimesToUnavailableTimes(times) {
+  const unavailable = new Set();
+  times.forEach(time => getBlockedServiceWindowTimes(time).forEach(t => unavailable.add(t)));
+  return sortTimes([...unavailable]);
+}
+
 async function getUnavailableTimesForDate(date) {
   if (!date) return new Set();
   try {
     const snap = await db.collection(AVAILABILITY_COLLECTION).where('date', '==', date).get();
-    const times = snap.docs
+    const bookedTimes = snap.docs
       .map(doc => doc.data())
       .filter(slot => isBlockingStatus(slot.status))
       .map(slot => slot.time)
       .filter(Boolean);
-    return new Set(sortTimes(times));
+    return new Set(expandBookedTimesToUnavailableTimes(bookedTimes));
   } catch (err) {
     console.warn('Could not load availability. Check Firestore rules for the availability collection.', err);
     return new Set();
   }
+}
+
+function getAvailableTimesForCurrentDate() {
+  return TIME_SLOTS.filter(t => !unavailableTimes.has(t));
 }
 
 function updateAvailabilityNote(date) {
@@ -1208,24 +1234,19 @@ function updateAvailabilityNote(date) {
   note.classList.remove('full', 'available');
 
   if (!date) {
-    note.textContent = 'Choose a date to see unavailable times. Booked times will be greyed out.';
+    note.textContent = 'Choose a date to see available times. Each booking reserves a 4-hour service window.';
     return;
   }
 
-  const blocked = sortTimes([...unavailableTimes]);
-  if (blocked.length === 0) {
-    note.classList.add('available');
-    note.textContent = 'All listed times are currently available for this date.';
-    return;
-  }
-
-  if (blocked.length >= TIME_SLOTS.length) {
+  const available = getAvailableTimesForCurrentDate();
+  if (available.length === 0) {
     note.classList.add('full');
     note.textContent = `This date is fully booked. Please choose another date.`;
     return;
   }
 
-  note.innerHTML = `<strong>Unavailable on ${formatDate(date)}:</strong> ${blocked.join(', ')}.`;
+  note.classList.add('available');
+  note.innerHTML = `<strong>Available times on ${formatDate(date)}:</strong> ${available.join(', ')}. <br><span style="font-weight:500;color:var(--text-muted);">Booked or overlapping 4-hour service windows are hidden.</span>`;
 }
 
 async function loadAvailabilityForDate(date) {
@@ -1450,17 +1471,29 @@ function renderSelectedServiceCard() {
 function renderTimeSlots() {
   const container = document.getElementById('timeSlots');
   if (!container) return;
-  container.innerHTML = TIME_SLOTS.map(t => {
-    const unavailable = unavailableTimes.has(t);
-    return `
-      <div class="slot ${selectedTime === t ? 'selected' : ''} ${unavailable ? 'unavailable' : ''}" onclick="selectSlot('${t}')">${t}${unavailable ? ' · Booked' : ''}</div>
-    `;
-  }).join('');
+
+  const dateField = document.getElementById('bDate');
+  const selectedDate = dateField ? dateField.value : '';
+
+  if (!selectedDate) {
+    container.innerHTML = `<div style="font-size:0.9rem;color:var(--text-muted);padding:10px 0;">Please choose a date first to load available times.</div>`;
+    return;
+  }
+
+  const availableTimes = getAvailableTimesForCurrentDate();
+  if (availableTimes.length === 0) {
+    container.innerHTML = `<div style="font-size:0.9rem;color:var(--danger);font-weight:700;padding:10px 0;">No available times for this date. Please choose another date.</div>`;
+    return;
+  }
+
+  container.innerHTML = availableTimes.map(t => `
+    <div class="slot ${selectedTime === t ? 'selected' : ''}" onclick="selectSlot('${t}')">${t}</div>
+  `).join('');
 }
 
 function selectSlot(t) {
   if (unavailableTimes.has(t)) {
-    showToast('⚠️ That time is already booked. Please choose another time.');
+    showToast('⚠️ That time falls inside a 4-hour service window. Please choose another time.');
     return;
   }
   selectedTime = t;
@@ -1603,7 +1636,7 @@ async function submitBooking(e) {
       selectedTime = null;
       renderTimeSlots();
       updateAvailabilityNote(booking.date);
-      showToast('⚠️ That time has just been booked. Please choose another available time.');
+      showToast('⚠️ That time now falls inside a 4-hour service window. Please choose another available time.');
       return;
     }
 
@@ -1672,12 +1705,12 @@ async function renderAdmin() {
   const total = bookings.length;
   const pending = bookings.filter(b => b.status === 'pending').length;
   const confirmed = bookings.filter(b => b.status === 'confirmed').length;
-  const revenue = bookings.filter(b => b.status !== 'cancelled').reduce((a, b) => a + Number(b.servicePrice || 0), 0);
+  const revenue = bookings.filter(b => b.status === 'completed').reduce((a, b) => a + Number(b.servicePrice || 0), 0);
   stats.innerHTML = `
     <div class="admin-stat blue"><div class="num">${total}</div><div class="lbl">Total Bookings</div></div>
     <div class="admin-stat yellow"><div class="num">${pending}</div><div class="lbl">Pending</div></div>
     <div class="admin-stat green"><div class="num">${confirmed}</div><div class="lbl">Confirmed</div></div>
-    <div class="admin-stat green"><div class="num">R${revenue}</div><div class="lbl">Total Revenue</div></div>
+    <div class="admin-stat green"><div class="num">R${revenue}</div><div class="lbl">Completed Revenue</div></div>
   `;
 
   document.getElementById('adminCount').textContent = `Showing ${filtered.length} booking${filtered.length !== 1 ? 's' : ''}`;
