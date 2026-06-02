@@ -278,7 +278,16 @@
   }
   .slot:hover { border-color: var(--primary); color: var(--primary); background: #e8f0fe; }
   .slot.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
-  .slot.unavailable { opacity: 0.4; cursor: not-allowed; text-decoration: line-through; }
+  .slot.unavailable { opacity: 0.45; cursor: not-allowed; text-decoration: line-through; background: #f3f4f6; color: #9ca3af; }
+  .availability-note {
+    margin-top: 10px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+  .availability-note strong { color: var(--text); }
+  .availability-note.full { color: var(--danger); font-weight: 700; }
+  .availability-note.available { color: var(--success); font-weight: 700; }
 
   /* ── CONFIRMATION ── */
   .confirm-card {
@@ -775,6 +784,7 @@
             <div class="divider"></div>
             <div class="form-section-title">⏰ Choose Time Slot</div>
             <div class="time-slots" id="timeSlots"></div>
+            <div id="availabilityNote" class="availability-note">Choose a date to see unavailable times. Booked times will be greyed out.</div>
             <div class="error-msg" id="err-bTime" style="margin-top:8px;">Please select a time slot.</div>
             <div style="margin-top:32px;">
               <!-- Summary -->
@@ -1114,6 +1124,7 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 const auth = firebase.auth();
 const BOOKINGS_COLLECTION = 'bookings';
+const AVAILABILITY_COLLECTION = 'availability';
 
 // Keep admin login only for the current browser session.
 auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.warn);
@@ -1121,6 +1132,7 @@ auth.setPersistence(firebase.auth.Auth.Persistence.SESSION).catch(console.warn);
 let bookings = [];
 let selectedService = null;
 let selectedTime = null;
+let unavailableTimes = new Set();
 let isAdminLoggedIn = false;
 
 function makeBookingId() {
@@ -1157,6 +1169,97 @@ async function loadAllBookingsFromFirestore() {
   const snap = await db.collection(BOOKINGS_COLLECTION).get();
   bookings = snap.docs.map(normalizeBooking);
   return bookings;
+}
+
+function isBlockingStatus(status) {
+  return ['pending', 'confirmed', 'completed'].includes(status);
+}
+
+function sortTimes(times) {
+  return [...new Set(times)].sort((a, b) => {
+    const ai = TIME_SLOTS.indexOf(a);
+    const bi = TIME_SLOTS.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+}
+
+async function getUnavailableTimesForDate(date) {
+  if (!date) return new Set();
+  try {
+    const snap = await db.collection(AVAILABILITY_COLLECTION).where('date', '==', date).get();
+    const times = snap.docs
+      .map(doc => doc.data())
+      .filter(slot => isBlockingStatus(slot.status))
+      .map(slot => slot.time)
+      .filter(Boolean);
+    return new Set(sortTimes(times));
+  } catch (err) {
+    console.warn('Could not load availability. Check Firestore rules for the availability collection.', err);
+    return new Set();
+  }
+}
+
+function updateAvailabilityNote(date) {
+  const note = document.getElementById('availabilityNote');
+  if (!note) return;
+  note.classList.remove('full', 'available');
+
+  if (!date) {
+    note.textContent = 'Choose a date to see unavailable times. Booked times will be greyed out.';
+    return;
+  }
+
+  const blocked = sortTimes([...unavailableTimes]);
+  if (blocked.length === 0) {
+    note.classList.add('available');
+    note.textContent = 'All listed times are currently available for this date.';
+    return;
+  }
+
+  if (blocked.length >= TIME_SLOTS.length) {
+    note.classList.add('full');
+    note.textContent = `This date is fully booked. Please choose another date.`;
+    return;
+  }
+
+  note.innerHTML = `<strong>Unavailable on ${formatDate(date)}:</strong> ${blocked.join(', ')}.`;
+}
+
+async function loadAvailabilityForDate(date) {
+  unavailableTimes = await getUnavailableTimesForDate(date);
+  if (selectedTime && unavailableTimes.has(selectedTime)) selectedTime = null;
+  renderTimeSlots();
+  updateAvailabilityNote(date);
+}
+
+async function saveAvailabilitySlot(booking, status) {
+  const availability = {
+    bookingId: booking.id,
+    date: booking.date,
+    time: booking.time,
+    serviceName: booking.serviceName || '',
+    status,
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+
+  if (status === 'pending') {
+    availability.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+  }
+
+  await db.collection(AVAILABILITY_COLLECTION).doc(booking.id).set(availability, { merge: true });
+}
+
+function getBookedTimesTextForDate(date, excludeBookingId) {
+  const times = bookings
+    .filter(b => b.date === date && b.id !== excludeBookingId && isBlockingStatus(b.status))
+    .map(b => b.time)
+    .filter(Boolean);
+
+  const sorted = sortTimes(times);
+  return sorted.length ? sorted.join(', ') : 'No other confirmed or pending times are currently showing for this date.';
 }
 
 // ════════════════════════════════════
@@ -1316,7 +1419,11 @@ function initBookingForm() {
   document.querySelectorAll('input[name="preferredContact"]').forEach(el => {
     el.onchange = updateSummary;
   });
-  document.getElementById('bDate').onchange = updateSummary;
+  document.getElementById('bDate').onchange = async () => {
+    await loadAvailabilityForDate(document.getElementById('bDate').value);
+    updateSummary();
+  };
+  updateAvailabilityNote('');
 }
 
 function renderSelectedServiceCard() {
@@ -1342,12 +1449,20 @@ function renderSelectedServiceCard() {
 
 function renderTimeSlots() {
   const container = document.getElementById('timeSlots');
-  container.innerHTML = TIME_SLOTS.map(t => `
-    <div class="slot ${selectedTime === t ? 'selected' : ''}" onclick="selectSlot('${t}')">${t}</div>
-  `).join('');
+  if (!container) return;
+  container.innerHTML = TIME_SLOTS.map(t => {
+    const unavailable = unavailableTimes.has(t);
+    return `
+      <div class="slot ${selectedTime === t ? 'selected' : ''} ${unavailable ? 'unavailable' : ''}" onclick="selectSlot('${t}')">${t}${unavailable ? ' · Booked' : ''}</div>
+    `;
+  }).join('');
 }
 
 function selectSlot(t) {
+  if (unavailableTimes.has(t)) {
+    showToast('⚠️ That time is already booked. Please choose another time.');
+    return;
+  }
   selectedTime = t;
   renderTimeSlots();
   updateSummary();
@@ -1482,7 +1597,23 @@ async function submitBooking(e) {
   };
 
   try {
+    const blockedTimes = await getUnavailableTimesForDate(booking.date);
+    if (blockedTimes.has(booking.time)) {
+      unavailableTimes = blockedTimes;
+      selectedTime = null;
+      renderTimeSlots();
+      updateAvailabilityNote(booking.date);
+      showToast('⚠️ That time has just been booked. Please choose another available time.');
+      return;
+    }
+
     await db.collection(BOOKINGS_COLLECTION).doc(booking.id).set(booking);
+    try {
+      await saveAvailabilitySlot(booking, 'pending');
+    } catch (availabilityErr) {
+      console.warn('Booking saved, but availability calendar could not update. Check Firestore rules.', availabilityErr);
+      showToast('⚠️ Booking saved, but availability calendar could not update. Check Firestore rules.');
+    }
     bookings.push({ ...booking, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
 
     // Populate confirmation page
@@ -1499,7 +1630,7 @@ async function submitBooking(e) {
     document.getElementById('conf-price').textContent = `R${booking.servicePrice}`;
 
     showPage('confirmation');
-    showToast('🎉 Kiff! Booking saved online! #' + booking.id);
+    showToast('🎉 Kiff! Booking saved online. We will confirm your request shortly.');
   } catch (err) {
     console.error(err);
     showToast('❌ Booking could not be saved. Check Firebase/Firestore setup.');
@@ -1602,12 +1733,16 @@ async function renderAdmin() {
 
 async function updateStatus(bookingId, newStatus) {
   try {
+    const idx = bookings.findIndex(b => b.id === bookingId);
+    const booking = idx !== -1 ? bookings[idx] : null;
     await db.collection(BOOKINGS_COLLECTION).doc(bookingId).update({
       status: newStatus,
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     });
-    const idx = bookings.findIndex(b => b.id === bookingId);
-    if (idx !== -1) bookings[idx].status = newStatus;
+    if (booking) {
+      await saveAvailabilitySlot({ ...booking, id: bookingId }, newStatus);
+      bookings[idx].status = newStatus;
+    }
     renderAdmin();
     showToast(`✅ KiffDetailing — Booking #${bookingId} → ${capitalize(newStatus)}`);
   } catch (err) {
@@ -1626,84 +1761,95 @@ function formatPhoneForWhatsApp(phone) {
   return digits;
 }
 
-function buildStatusWhatsAppMessage(booking, status) {
+function buildStatusWhatsAppMessage(booking, status, bookedTimesText = '') {
   const isAccepted = status === 'confirmed';
-  const heading = isAccepted
-    ? `Hi ${booking.name}, your KiffDetailing booking request has been ACCEPTED ✅`
-    : `Hi ${booking.name}, unfortunately your KiffDetailing booking request has been DECLINED ❌`;
 
-  const ending = isAccepted
-    ? 'We will see you then. Keep it clean. Keep it kiff.'
-    : 'Please reply to this message and we can help arrange another date or time. Keep it clean. Keep it kiff.';
+  if (isAccepted) {
+    return [
+      `Hi ${booking.name}, your KiffDetailing booking has been accepted ✅`,
+      '',
+      `Date: ${formatDate(booking.date)}`,
+      `Time: ${booking.time}`,
+      '',
+      'We can’t wait to give your car that kiff clean.',
+      '',
+      'Thank you for booking with KiffDetailing.',
+      'Keep it clean. Keep it kiff.'
+    ].join('\n');
+  }
 
   return [
-    heading,
+    `Hi ${booking.name}, unfortunately your KiffDetailing booking has been declined for the selected time ❌`,
     '',
-    `Booking ID: ${booking.id}`,
-    `Service: ${booking.serviceName}`,
-    `Date: ${formatDate(booking.date)}`,
-    `Time: ${booking.time}`,
-    `Car: ${booking.make} ${booking.model}`,
-    `Location: ${booking.location || 'Location not added'}`,
-    `Preferred confirmation method: ${getPreferredContactLabel(booking.preferredContact)}`,
+    `The following times are already booked on ${formatDate(booking.date)}:`,
+    bookedTimesText || 'No other confirmed or pending times are currently showing for this date.',
     '',
-    ending
+    'Would you like to book for another available time?',
+    '',
+    'Thank you for understanding.',
+    'Keep it clean. Keep it kiff.'
   ].join('\n');
 }
 
 function buildStatusEmailSubject(booking, status) {
   return status === 'confirmed'
-    ? `KiffDetailing Booking Confirmed - ${booking.id}`
-    : `KiffDetailing Booking Update - ${booking.id}`;
+    ? 'KiffDetailing booking accepted'
+    : 'KiffDetailing booking declined';
 }
 
-function buildStatusEmailBody(booking, status) {
+function buildStatusEmailBody(booking, status, bookedTimesText = '') {
   const isAccepted = status === 'confirmed';
-  const intro = isAccepted
-    ? `Your KiffDetailing booking request has been accepted.`
-    : `Unfortunately, your KiffDetailing booking request has been declined.`;
 
-  const ending = isAccepted
-    ? 'We look forward to cleaning your car. Keep it clean. Keep it kiff.'
-    : 'Please reply to this email or WhatsApp us on 064 546 8559 so we can help arrange another date or time.';
+  if (isAccepted) {
+    return [
+      `Hi ${booking.name},`,
+      '',
+      'Your KiffDetailing booking has been accepted ✅',
+      '',
+      `Date: ${formatDate(booking.date)}`,
+      `Time: ${booking.time}`,
+      '',
+      'We can’t wait to give your car that kiff clean.',
+      '',
+      'Thank you for booking with KiffDetailing.',
+      'Keep it clean. Keep it kiff.',
+      '',
+      'Kind regards,',
+      'KiffDetailing'
+    ].join('\n');
+  }
 
   return [
     `Hi ${booking.name},`,
     '',
-    intro,
+    'Unfortunately your KiffDetailing booking has been declined for the selected time ❌',
     '',
-    'Booking details:',
-    `Booking ID: ${booking.id}`,
-    `Service: ${booking.serviceName}`,
-    `Date: ${formatDate(booking.date)}`,
-    `Time: ${booking.time}`,
-    `Car: ${booking.make} ${booking.model}`,
-    `Location: ${booking.location || 'Location not added'}`,
-    `Preferred confirmation method: ${getPreferredContactLabel(booking.preferredContact)}`,
-    `Total: R${booking.servicePrice}`,
+    `The following times are already booked on ${formatDate(booking.date)}:`,
+    bookedTimesText || 'No other confirmed or pending times are currently showing for this date.',
     '',
-    ending,
+    'Would you like to book for another available time?',
+    '',
+    'Thank you for understanding.',
+    'Keep it clean. Keep it kiff.',
     '',
     'Kind regards,',
-    'KiffDetailing',
-    'Keep it clean. Keep it kiff.',
-    'WhatsApp: 064 546 8559'
+    'KiffDetailing'
   ].join('\n');
 }
 
-function openCustomerWhatsApp(booking, status, existingTab) {
+function openCustomerWhatsApp(booking, status, existingTab, bookedTimesText = '') {
   const whatsappNumber = formatPhoneForWhatsApp(booking.phone);
   if (!whatsappNumber) {
     showToast('⚠️ This booking does not have a valid phone number.');
     return;
   }
-  const message = encodeURIComponent(buildStatusWhatsAppMessage(booking, status));
+  const message = encodeURIComponent(buildStatusWhatsAppMessage(booking, status, bookedTimesText));
   const url = `https://wa.me/${whatsappNumber}?text=${message}`;
   if (existingTab) existingTab.location.href = url;
   else window.open(url, '_blank');
 }
 
-function openCustomerEmail(booking, status) {
+function openCustomerEmail(booking, status, bookedTimesText = '') {
   const email = cleanEmail(booking.email);
   if (!email || !email.includes('@')) {
     showToast('⚠️ This booking does not have a valid email address.');
@@ -1711,7 +1857,7 @@ function openCustomerEmail(booking, status) {
   }
 
   const subject = encodeURIComponent(buildStatusEmailSubject(booking, status));
-  const body = encodeURIComponent(buildStatusEmailBody(booking, status));
+  const body = encodeURIComponent(buildStatusEmailBody(booking, status, bookedTimesText));
   window.location.href = `mailto:${email}?subject=${subject}&body=${body}`;
 }
 
@@ -1732,6 +1878,8 @@ async function updateStatusAndNotify(bookingId, newStatus, channel) {
     return;
   }
 
+  const bookedTimesText = newStatus === 'cancelled' ? getBookedTimesTextForDate(booking.date, booking.id) : '';
+
   // Open a blank WhatsApp tab immediately from the button click so popup blockers do not stop it.
   const whatsappTab = channel === 'whatsapp' ? window.open('', '_blank') : null;
 
@@ -1743,6 +1891,7 @@ async function updateStatusAndNotify(bookingId, newStatus, channel) {
       notifiedStatus: newStatus,
       notifiedVia: channel
     });
+    await saveAvailabilitySlot({ ...booking, id: bookingId }, newStatus);
 
     booking.status = newStatus;
     booking.notifiedStatus = newStatus;
@@ -1750,10 +1899,10 @@ async function updateStatusAndNotify(bookingId, newStatus, channel) {
     renderAdmin();
 
     if (channel === 'whatsapp') {
-      openCustomerWhatsApp(booking, newStatus, whatsappTab);
+      openCustomerWhatsApp(booking, newStatus, whatsappTab, bookedTimesText);
       showToast(`💬 ${newStatus === 'confirmed' ? 'Accept' : 'Decline'} WhatsApp opened for ${booking.name}. Press Send in WhatsApp.`);
     } else {
-      openCustomerEmail(booking, newStatus);
+      openCustomerEmail(booking, newStatus, bookedTimesText);
       showToast(`📧 ${newStatus === 'confirmed' ? 'Accept' : 'Decline'} email opened for ${booking.name}. Press Send in your email app.`);
     }
   } catch (err) {
