@@ -1828,6 +1828,99 @@
     }
   }
 
+
+
+  /* ── HERO PHOTO LAYOUT UPDATE: text boxes below the car image ── */
+  #page-home .hero {
+    padding-bottom: 42px !important;
+  }
+
+  #page-home .sketch-main-text {
+    margin-bottom: 24px !important;
+  }
+
+  #page-home .sketch-car-stage {
+    width: 100vw !important;
+    height: clamp(500px, 54vw, 760px) !important;
+    margin: 0 0 0 calc(50% - 50vw) !important;
+    border-radius: 0 !important;
+  }
+
+  #page-home .sketch-car-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    object-position: center center !important;
+    transform: scale(1.02);
+    transform-origin: center center;
+    filter: contrast(1.06) saturate(1.08) brightness(0.96) !important;
+  }
+
+  #page-home .sketch-text-row {
+    max-width: 980px !important;
+    margin: 28px auto 0 !important;
+    padding: 0 24px !important;
+    position: relative !important;
+    z-index: 5 !important;
+    gap: 26px !important;
+  }
+
+  #page-home .sketch-info-card {
+    padding: 16px 18px !important;
+    border-radius: 18px !important;
+    background: rgba(17,24,39,0.78) !important;
+    border: 1px solid rgba(148,163,184,0.16) !important;
+    box-shadow: 0 18px 42px rgba(2,6,23,0.28) !important;
+    backdrop-filter: blur(5px) !important;
+  }
+
+  #page-home .sketch-info-card h3 {
+    font-size: 0.9rem !important;
+  }
+
+  #page-home .sketch-info-card p {
+    font-size: 0.74rem !important;
+    line-height: 1.55 !important;
+  }
+
+  @media (max-width: 760px) {
+    #page-home .sketch-car-stage {
+      height: 430px !important;
+    }
+
+    #page-home .sketch-text-row {
+      grid-template-columns: 1fr !important;
+      max-width: 460px !important;
+      margin-top: 20px !important;
+      gap: 12px !important;
+    }
+  }
+
+
+
+  /* ── HERO COPY MOVED BELOW PHOTO ── */
+  #page-home .sketch-main-text {
+    margin-bottom: 18px !important;
+  }
+
+  #page-home .sketch-hero-copy {
+    max-width: 860px;
+    margin: 24px auto 0;
+    padding: 0 24px;
+    color: rgba(226,232,240,0.72);
+    font-size: clamp(0.78rem, 1vw, 0.96rem);
+    line-height: 1.75;
+    text-align: center;
+    letter-spacing: 0.01em;
+  }
+
+  @media (max-width: 760px) {
+    #page-home .sketch-hero-copy {
+      margin-top: 18px;
+      font-size: 0.78rem;
+    }
+  }
+
 </style>
 </head>
 <body>
@@ -1856,7 +1949,15 @@
 
       <div class="sketch-main-text">
         <h1>Mobile Car Detailing<br><span>That Comes To You</span></h1>
-        <p>Premium car cleaning and detailing brought straight to your home, office, or chosen location. Book online, choose an available time, and let KiffDetailing handle the rest.</p>
+        
+      </div>
+
+      <div class="sketch-car-stage">
+        <img src="hero-car.jpg" alt="" class="sketch-car-img" onerror="this.style.display='none';">
+      </div>
+
+      <div class="sketch-hero-copy">
+        Premium car cleaning and detailing brought straight to your home, office, or chosen location. Book online, choose an available time, and let KiffDetailing handle the rest.
       </div>
 
       <div class="sketch-text-row">
@@ -1870,10 +1971,6 @@
           <h3>Simple Booking</h3>
           <p>Choose your service, date, and available time. We confirm your booking by WhatsApp or email.</p>
         </div>
-      </div>
-
-      <div class="sketch-car-stage">
-        <img src="hero-car.jpg" alt="" class="sketch-car-img" onerror="this.style.display='none';">
       </div>
 
     </div>
