@@ -1674,6 +1674,160 @@
     letter-spacing: -0.02em !important;
   }
 
+
+
+  /* ── WIDE CAR PHOTO HERO + SUBTLE TEXT OVERLAY ── */
+  #page-home .hero {
+    min-height: calc(100vh - 64px) !important;
+    padding: clamp(24px, 4vw, 46px) 0 0 !important;
+    display: block !important;
+    background:
+      radial-gradient(circle at 50% 0%, rgba(56,189,248,0.12), transparent 26%),
+      linear-gradient(180deg, #030712 0%, #0b1220 55%, #030712 100%) !important;
+  }
+
+  #page-home .hero::before {
+    opacity: 0.45 !important;
+  }
+
+  .sketch-hero-wrap {
+    width: 100% !important;
+    max-width: none !important;
+    position: relative !important;
+    overflow: hidden !important;
+  }
+
+  .sketch-hero-topline {
+    margin-bottom: 10px !important;
+    padding: 5px 14px !important;
+    font-size: 0.64rem !important;
+    opacity: 0.72 !important;
+    background: rgba(15,23,42,0.42) !important;
+  }
+
+  .sketch-main-text {
+    max-width: 900px !important;
+    margin: 0 auto 12px !important;
+    padding: clamp(10px, 2.2vw, 22px) clamp(14px, 3.2vw, 34px) !important;
+    background: rgba(15,23,42,0.18) !important;
+    border: 1px solid rgba(148,163,184,0.10) !important;
+    box-shadow: none !important;
+    backdrop-filter: blur(2px) !important;
+  }
+
+  .sketch-main-text h1 {
+    font-size: clamp(2.4rem, 6vw, 5.6rem) !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.055em !important;
+    opacity: 0.96 !important;
+  }
+
+  .sketch-main-text p {
+    max-width: 650px !important;
+    margin-top: 14px !important;
+    font-size: clamp(0.78rem, 1.05vw, 0.96rem) !important;
+    line-height: 1.65 !important;
+    color: rgba(226,232,240,0.78) !important;
+  }
+
+  .sketch-text-row {
+    max-width: 740px !important;
+    gap: 18px !important;
+    margin: 6px auto -86px !important;
+    position: relative !important;
+    z-index: 6 !important;
+    padding: 0 18px !important;
+  }
+
+  .sketch-info-card {
+    padding: 12px 14px !important;
+    border-radius: 16px !important;
+    background: rgba(15,23,42,0.46) !important;
+    border: 1px solid rgba(148,163,184,0.13) !important;
+    box-shadow: 0 14px 34px rgba(2,6,23,0.26) !important;
+    backdrop-filter: blur(4px) !important;
+  }
+
+  .sketch-info-card::after {
+    display: none !important;
+  }
+
+  .sketch-card-label {
+    font-size: 0.58rem !important;
+    margin-bottom: 5px !important;
+    color: rgba(56,189,248,0.84) !important;
+  }
+
+  .sketch-info-card h3 {
+    font-size: 0.82rem !important;
+    margin-bottom: 4px !important;
+    color: rgba(248,250,252,0.92) !important;
+  }
+
+  .sketch-info-card p {
+    font-size: 0.68rem !important;
+    line-height: 1.45 !important;
+    color: rgba(203,213,225,0.78) !important;
+  }
+
+  .sketch-car-stage {
+    width: 100vw !important;
+    height: clamp(390px, 45vw, 570px) !important;
+    margin: 0 0 0 calc(50% - 50vw) !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    position: relative !important;
+    z-index: 2 !important;
+  }
+
+  .sketch-car-stage::before {
+    display: none !important;
+  }
+
+  .sketch-car-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(180deg, rgba(3,7,18,0.22) 0%, rgba(3,7,18,0.02) 32%, rgba(3,7,18,0.18) 100%),
+      linear-gradient(90deg, rgba(3,7,18,0.40) 0%, transparent 22%, transparent 78%, rgba(3,7,18,0.40) 100%);
+    pointer-events: none;
+    z-index: 3;
+  }
+
+  .sketch-car-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: none !important;
+    object-fit: cover !important;
+    object-position: center 52% !important;
+    border-radius: 0 !important;
+    filter: saturate(1.05) contrast(1.03) !important;
+  }
+
+  @media (max-width: 760px) {
+    .sketch-text-row {
+      grid-template-columns: 1fr !important;
+      max-width: 430px !important;
+      margin: 8px auto -120px !important;
+      gap: 10px !important;
+    }
+
+    .sketch-main-text {
+      margin-left: 14px !important;
+      margin-right: 14px !important;
+      border-radius: 20px !important;
+    }
+
+    .sketch-car-stage {
+      height: 390px !important;
+    }
+
+    .sketch-car-img {
+      object-position: center center !important;
+    }
+  }
+
 </style>
 </head>
 <body>
